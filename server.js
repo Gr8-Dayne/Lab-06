@@ -4,7 +4,7 @@ const express = require('express');
 const app = express(); //creates a server that is an object
 const cors = require('cors');
 
-app.use( cors() );
+app.use(cors());
 
 app.use(express.static('./public'));
 
@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3005;
 //called in browser http://localhost:3000/Portfolio
 //response what will show on the browser 
 
-app.get('/location', function(request,response){
+app.get('/location', function (request, response) {
   //console.log('route portfiolio works');
   // response.send('this is the response');
   const geoData = require('data/geo.json');
@@ -24,7 +24,7 @@ app.get('/location', function(request,response){
   var latitude = geoData.results[0].geometry.location.lat
   var longitude = geoData.results[0].geometry.location.lng
 
-  
+
   response.send({
     "search_query": location,
     "formatted_query": "Seattle, WA, USA",
@@ -35,7 +35,7 @@ app.get('/location', function(request,response){
 });
 
 
-app.listen(PORT, function(){
+app.listen(PORT, function () {
   console.log('starting!');
 });
 
