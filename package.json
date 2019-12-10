@@ -1,23 +1,27 @@
 {
-  "name": "lab-06",
+  "name": "lab-06-back-end",
   "version": "1.0.0",
-  "description": "partner: Peter H",
-  "main": "server.js",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.1"
+  },
+  "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Gr8-Dayne/Lab-06.git"
+    "url": "git+https://github.com/petewhartnett/lab-06-back-end.git"
   },
-  "author": "Dayne Daylong",
+  "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Gr8-Dayne/Lab-06/issues"
+    "url": "https://github.com/petewhartnett/lab-06-back-end/issues"
   },
-  "homepage": "https://github.com/Gr8-Dayne/Lab-06#readme",
-  "dependencies": {
-    "express": "^4.17.1"
-  }
+  "homepage": "https://github.com/petewhartnett/lab-06-back-end#readme",
+  "keywords": []
 }
