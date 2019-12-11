@@ -1,66 +1,88 @@
 'use strict';
-
+const PORT = process.env.PORT || 3000;
 const express = require('express');
-const app = express(); //creates a server that is an object
 const cors = require('cors');
+const superagent = require('superagent');
 
-app.use( cors() );
-
-app.use(express.static('./public'));
-
-const PORT = process.env.PORT || 3005;
-
+const app = express();
+require('dotenv').config();
+app.use(cors());
 
 
-//this is a route 
-//called in browser http://localhost:3000/Portfolio
-//response what will show on the browser 
+function Geolocation(latitude, longitude, formatted_address, search_query) {
+  this.latitude = latitude,
+  this.longitude = longitude,
+  this.formatted_query = formatted_address,
+  this.search_query = search_query
+}
 
-app.get('/location', function(request,response){
-  //console.log('route portfiolio works');
-  // response.send('this is the response');
-  const geoData = require('./data/geo.json');
-  const location = geoData.results[0].address_components[0].long_nam;
-  var latitude = geoData.results[0].geometry.location.lat
-  console.log(latitude);
-  var longitude = geoData.results[0].geometry.location.lng
+function Forcast(forecast, time) {
+  this.forecast = forecast,
+  this.time = new Date(time * 1000).toDateString();
+}
 
+function Event(link, name, date, summary) {
+  this.link = link,
+  this.name = name,
+  this.event_date = date,
+  this.summary = summary
+}
 
-  response.send({
-    "search_query": location,
-    "formatted_query": "Seattle, WA, USA",
-    "latitude": latitude,
-    "longitude": longitude
-  })
+let longitude = '';
+let latitude = '';
+
+app.get('/location', (req, res) => {
+
+  superagent.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${req.query.data}&key=${process.env.GEOCODE_API_KEY}`).then(response => {
+
+    const geoDataArray = response.body.results;
+    const search_query = geoDataArray[0].address_components[0].short_name;
+    const formatted_query = geoDataArray[0].formatted_address;
+    const lat = geoDataArray[0].geometry.location.lat;
+    const lng = geoDataArray[0].geometry.location.lng;
+
+    const nextLocation = new Geolocation(lat, lng, formatted_query, search_query);
+
+    res.send(nextLocation);
+
+  });
+
 
 });
 
-
-
-// app.get('/weather', function(request,response){
-//   //console.log('route portfiolio works');
-//   // response.send('this is the response');
+app.get('/weather', (req, res) => {
   
-
-//   response.send({
+  superagent.get(`https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${req.query.data.latitude},${req.query.data.longitude}`).then(response => {
     
-      
-//         "forecast": "Partly cloudy until afternoon.",
-//         "time": "Mon Jan 01 2001",
+    let dailyData = response.body.daily.data;
     
-      
-      
-//       })
+    let nextForecast = dailyData.map( (val, index, array) => {
+      let nextForeCastObj = new Forcast(val.summary, val.time);
+      return nextForeCastObj;
+    });
     
-    
-    
-
-      
-
-// });
-
-
-app.listen(PORT, function(){
-  console.log('starting!');
+    res.send(nextForecast);
+  });
 });
 
+app.get('/events', (req, res) => {
+  
+  superagent.get(`http://api.eventful.com/json/events/search?location=${req.query.data.formatted_query}&app_key=${process.env.EVENTFUL_API_KEY}`).then(response => {
+    const eventfulJSON = JSON.parse(response.text);
+
+    const eventsArray = eventfulJSON.events.event;
+
+    const nextEvents = eventsArray.map( (val, index, array) => {
+      let nextEventObj = new Event(val.url, val.venue_name, val.start_time, val.title);
+      return nextEventObj;
+    });
+
+    res.send(nextEvents);
+
+  });
+});
+
+
+app.listen(PORT, () => {
+  console.log(`App is on PORT: ${PORT}`);
+})
