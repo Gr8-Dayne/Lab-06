@@ -1,10 +1,11 @@
 'use strict';
 
+
 const express = require('express');
 const app = express(); //creates a server that is an object
 const cors = require('cors');
-
 app.use( cors() );
+
 
 app.use(express.static('./public'));
 
@@ -22,7 +23,7 @@ app.get('/location', function(request,response){
   const geoData = require('./data/geo.json');
   const location = geoData.results[0].address_components[0].long_nam;
   var latitude = geoData.results[0].geometry.location.lat
-  console.log(latitude);
+  // console.log(latitude);
   var longitude = geoData.results[0].geometry.location.lng
 
 
@@ -61,6 +62,6 @@ app.get('/location', function(request,response){
 
 
 app.listen(PORT, function(){
-  console.log('starting!');
+  console.log(`Port ${PORT} working`);
 });
 
