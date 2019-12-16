@@ -15,6 +15,7 @@ app.use(cors());
 //   responseText: 'Sorry, something went wrong'
 // }
 
+
 function Geolocation(latitude, longitude, formatted_address, search_query) {
   this.latitude = latitude,
   this.longitude = longitude,
@@ -68,3 +69,6 @@ app.listen(PORT, () => {
   console.log(`App is on PORT: ${PORT}`);
 })
 
+app.listen(PORT, () => {
+  console.log(`App is on PORT: ${PORT}`);
+})
