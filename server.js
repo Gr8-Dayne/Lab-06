@@ -1,67 +1,70 @@
 'use strict';
 
+// this file was created with the assistance of Micah.
 
+const PORT = process.env.PORT || 3077;
 const express = require('express');
-const app = express(); //creates a server that is an object
 const cors = require('cors');
-app.use( cors() );
+const app = express();
 
+require('dotenv').config();
+app.use(cors());
 
-app.use(express.static('./public'));
+// let error = {
+//   status: '500',
+//   responseText: 'Sorry, something went wrong'
+// }
 
-const PORT = process.env.PORT || 3005;
+function Geolocation(latitude, longitude, formatted_address, search_query) {
+  this.latitude = latitude,
+  this.longitude = longitude,
+  this.formatted_query = formatted_address,
+  this.search_query = search_query
+}
 
+function Forcast(forecast, time) {
+  this.forecast = forecast,
+  this.time = getDate(new Date(time * 1000));
+}
 
-
-//this is a route 
-//called in browser http://localhost:3000/Portfolio
-//response what will show on the browser 
-
-app.get('/location', function(request,response){
-  //console.log('route portfiolio works');
-  // response.send('this is the response');
+const newData = [];
+app.get('/location', (request, response) => {
   const geoData = require('./data/geo.json');
-  const location = geoData.results[0].address_components[0].long_nam;
-  var latitude = geoData.results[0].geometry.location.lat
-  // console.log(latitude);
-  var longitude = geoData.results[0].geometry.location.lng
+  const geoDataResult = geoData.results[0];
+  const geoDataGeometry = geoDataResult.geometry;
+  const geoDataLocation = geoDataGeometry.location;
+  newData.push(new Geolocation(geoDataLocation.lat, geoDataLocation.lng, geoDataResult.formatted_address, geoDataResult.address_components[0].short_name.toLowerCase()));
+  if (request.query.data === newData[0].search_query) {
+    response.send(newData[0]);
+  }
+  else if (request.query.data !== newData[0].search_query) {
+    throw new Error('Oops, something went wrong');
+  }
+})
 
-
-  response.send({
-    "search_query": location,
-    "formatted_query": "Seattle, WA, USA",
-    "latitude": latitude,
-    "longitude": longitude
+app.get('/weather', (request, response) => {
+  const weatherData = require('./data/darksky.json');
+  const dailyWeatherData = weatherData.daily;
+  const dailyData = dailyWeatherData.data;
+  const weatherArr = [];
+  dailyData.forEach(val => {
+    weatherArr.push(new Forcast(val.summary, val.time));
   })
+  if (request.query.data.search_query === newData[0].search_query) {
+    response.send(weatherArr);
+  } else {
+    throw new Error('Oops, something went wrong');
+  }
+})
 
-});
+function getDate(time) {
+  const day = ['Sun', 'Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat'];
+  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+  let currentDate = `${day[time.getDay()]} ${month[time.getMonth()]} ${time.getDate()} ${time.getFullYear()}`;
+  return currentDate;
+}
 
-
-
-// app.get('/weather', function(request,response){
-//   //console.log('route portfiolio works');
-//   // response.send('this is the response');
-  
-
-//   response.send({
-    
-      
-//         "forecast": "Partly cloudy until afternoon.",
-//         "time": "Mon Jan 01 2001",
-    
-      
-      
-//       })
-    
-    
-    
-
-      
-
-// });
-
-
-app.listen(PORT, function(){
-  console.log(`Port ${PORT} working`);
-});
+app.listen(PORT, () => {
+  console.log(`App is on PORT: ${PORT}`);
+})
 
