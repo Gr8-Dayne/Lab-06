@@ -1,12 +1,19 @@
 'use strict';
-const PORT = process.env.PORT || 3000;
+
+// this file was created with the assistance of Micah.
+
+const PORT = process.env.PORT || 3077;
 const express = require('express');
 const cors = require('cors');
-const superagent = require('superagent');
-
 const app = express();
+
 require('dotenv').config();
 app.use(cors());
+
+// let error = {
+//   status: '500',
+//   responseText: 'Sorry, something went wrong'
+// }
 
 
 function Geolocation(latitude, longitude, formatted_address, search_query) {
@@ -18,70 +25,49 @@ function Geolocation(latitude, longitude, formatted_address, search_query) {
 
 function Forcast(forecast, time) {
   this.forecast = forecast,
-  this.time = new Date(time * 1000).toDateString();
+  this.time = getDate(new Date(time * 1000));
 }
 
-function Event(link, name, date, summary) {
-  this.link = link,
-  this.name = name,
-  this.event_date = date,
-  this.summary = summary
+const newData = [];
+app.get('/location', (request, response) => {
+  const geoData = require('./data/geo.json');
+  const geoDataResult = geoData.results[0];
+  const geoDataGeometry = geoDataResult.geometry;
+  const geoDataLocation = geoDataGeometry.location;
+  newData.push(new Geolocation(geoDataLocation.lat, geoDataLocation.lng, geoDataResult.formatted_address, geoDataResult.address_components[0].short_name.toLowerCase()));
+  if (request.query.data === newData[0].search_query) {
+    response.send(newData[0]);
+  }
+  else if (request.query.data !== newData[0].search_query) {
+    throw new Error('Oops, something went wrong');
+  }
+})
+
+app.get('/weather', (request, response) => {
+  const weatherData = require('./data/darksky.json');
+  const dailyWeatherData = weatherData.daily;
+  const dailyData = dailyWeatherData.data;
+  const weatherArr = [];
+  dailyData.forEach(val => {
+    weatherArr.push(new Forcast(val.summary, val.time));
+  })
+  if (request.query.data.search_query === newData[0].search_query) {
+    response.send(weatherArr);
+  } else {
+    throw new Error('Oops, something went wrong');
+  }
+})
+
+function getDate(time) {
+  const day = ['Sun', 'Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat'];
+  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+  let currentDate = `${day[time.getDay()]} ${month[time.getMonth()]} ${time.getDate()} ${time.getFullYear()}`;
+  return currentDate;
 }
 
-let longitude = '';
-let latitude = '';
-
-app.get('/location', (req, res) => {
-
-  superagent.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${req.query.data}&key=${process.env.GEOCODE_API_KEY}`).then(response => {
-
-    const geoDataArray = response.body.results;
-    const search_query = geoDataArray[0].address_components[0].short_name;
-    const formatted_query = geoDataArray[0].formatted_address;
-    const lat = geoDataArray[0].geometry.location.lat;
-    const lng = geoDataArray[0].geometry.location.lng;
-
-    const nextLocation = new Geolocation(lat, lng, formatted_query, search_query);
-
-    res.send(nextLocation);
-
-  });
-
-
-});
-
-app.get('/weather', (req, res) => {
-  
-  superagent.get(`https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${req.query.data.latitude},${req.query.data.longitude}`).then(response => {
-    
-    let dailyData = response.body.daily.data;
-    
-    let nextForecast = dailyData.map( (val, index, array) => {
-      let nextForeCastObj = new Forcast(val.summary, val.time);
-      return nextForeCastObj;
-    });
-    
-    res.send(nextForecast);
-  });
-});
-
-app.get('/events', (req, res) => {
-  
-  superagent.get(`http://api.eventful.com/json/events/search?location=${req.query.data.formatted_query}&app_key=${process.env.EVENTFUL_API_KEY}`).then(response => {
-    const eventfulJSON = JSON.parse(response.text);
-
-    const eventsArray = eventfulJSON.events.event;
-
-    const nextEvents = eventsArray.map( (val, index, array) => {
-      let nextEventObj = new Event(val.url, val.venue_name, val.start_time, val.title);
-      return nextEventObj;
-    });
-
-    res.send(nextEvents);
-
-  });
-});
-
+app.listen(PORT, () => {
+  console.log(`App is on PORT: ${PORT}`);
+})
 
 app.listen(PORT, () => {
   console.log(`App is on PORT: ${PORT}`);
